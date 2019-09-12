@@ -96,12 +96,38 @@ unhappy.agents <- function(grid, min.similarity){
 # assigned to a new empty location. a new grid is generated to reflect all of
 # the moves that took place.
 one.round <- function(grid, min.similarity){
-  
+  # first, find all the empty locations on the grid
+  empty <- empty.locations(grid)
+  # second, locate all the unhappy agents who want to move
+  unhappy <- unhappy.agents(grid, min.similarity)
+  # if there are no unhappy agents, then the system is stable and we can return
+  # the grid that we started with.
+  if(length(unhappy)==0){ 
+    return(grid) 
+  }
+  # otherwise, we copy the grid
+  new.grid <- grid
+  # randomly reorder all the empty locations so there is no bias
+  # in how we fill the grid with the unhappy agents
+  empty <- empty[sample(1:nrow(empty)),]
+  # for each unhappy location
+  for(i in 1:nrow(unhappy)){
+    # first, check if there are any empty spaces left. if not,
+    # end the for loop with the break keyword
+    if(i > nrow(empty)){ break; }
+    # if there are spaces left, then we can take the unhappy agent and
+    # move it to the empty spot. this required copying the value at the 
+    # unhappy location to the empty location, and then making the unhappy
+    # location empty.
+    new.grid[empty[i,1],empty[i,2]] <- grid[unhappy[i,1],unhappy[i,2]]
+    new.grid[unhappy[i,1],unhappy[i,2]] <- 0
+  }
+  return(new.grid)
 }
 
 # running the simulation ####
 done <- FALSE # a variable to keep track of whether the simulation is complete
-grid <- create.grid(rows, cols, proportion.group.1, empty)
+grid <- create.grid(rows, cols, proportion.group.1, proportion.empty)
 seg.tracker <- c(segregation(grid)) # keeping a running tally of the segregation scores for each round
 while(!done){
   new.grid <- one.round(grid, min.similarity) # run one round of the simulation, and store output in new.grid
